@@ -1,8 +1,12 @@
+local inspect = require 'inspect'
 local nvn = require 'nvn'
 local player = require 'player'
 local baton = require 'baton.baton'
 local batontest = require 'baton.test'
-local objects = {}
+local objects = {
+	nvn,
+	player
+}
 
 local input = baton.new {
 	controls = {
@@ -21,16 +25,16 @@ local input = baton.new {
 
 function love.load()
   -- set baton instance within batontest
-  --batontest.input(baton)
+  batontest:setbaton(input)
+	print(inspect(batontest.batoninst))
 end
 
 function love.update(dt)
-	input:update()
-  batontest.update()
+	batontest:update(dt)
 end
 
 function love.draw()
-
+	batontest:draw()
 end
 
 function love.keypressed(key)

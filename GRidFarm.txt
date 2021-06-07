@@ -1,0 +1,5 @@
+big grid
+you move around on the grid
+plow, sow, water, harvest
+buy seeds
+harvest = seed + crops
