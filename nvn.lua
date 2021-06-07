@@ -6,7 +6,7 @@ local nvn = {
 }
 
 -- private functions
-local privatefunction()
+local function privatefunction()
   return true
 end
 

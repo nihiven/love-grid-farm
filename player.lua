@@ -6,10 +6,9 @@ local player = {
 }
 
 -- private functions
-local privatefunction()
+local function privatefunction()
   return true
 end
-
 
 -- public functions
 function player.load()
