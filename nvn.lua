@@ -1,3 +1,5 @@
+require 'system'
+
 local nvn = {
   _VERSION = 'nvn v1.0.0',
   _DESCRIPTION = 'Master nihiven Library',
