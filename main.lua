@@ -1,14 +1,29 @@
+--[[ mostly enums ]]
 require 'system'
+log = require 'log'
 
-local log = require 'log'
-local inspect = require 'inspect'
+--[[ assets ]]
+fonts = {}
+fonts.menu = love.graphics.setNewFont('fonts/AndromedaTV.TTF', 24)
+fonts.log = love.graphics.setNewFont('fonts/AndromedaTV.TTF', 24)
+
+
+--[[ game states ]]
+gamestates = {}
+gamestates.mainMenu = require 'gamestates.mainMenu'
+gamestates.debugMenu = require 'gamestates.debugMenu'
+
+
+--[[ Game Objects ]]
+inspect = require 'inspect'
 local nvn = require 'nvn'
-local player = require 'player'
 local baton = require 'baton.baton'
+player = require 'player'
+gamestate = require 'gamestate'
 --local batontest = require 'baton.test'
 
 
--- object list
+--[[ objects that have callbacks ]]
 local objects = {
 	nvn,
 	player,
@@ -16,16 +31,16 @@ local objects = {
 	log
 }
 
---[[
-	loop through every object, calling func
---]] 
+
+--[[ loop through every object, calling the func parameter ]] 
 local function callfuncontable(objects, func, ...)
 	for key, value in pairs(objects) do
 		value[func](...)
 	end
 end
 
--- input mapping
+
+--[[ input mapping ]]
 local input = baton.new {
 	controls = {
 		left = {'key:left', 'axis:leftx-', 'button:dpleft'},
@@ -41,11 +56,18 @@ local input = baton.new {
 	deadzone = .33,
 }
 
+
+--[[ Love Callbacks ]]
 function love.load()
   -- set baton instance within batontest
 	if (batontest ~= nil) then batontest:setbaton(input) end
+
+	log:setfont(fonts.log)
 	log:write('ok ok ok ')
-	log:write('alright alright alright')
+	log:write('alright, alright, alright. ooooohhhh')
+
+	gamestate.registerEvents()
+  gamestate.switch(gamestates.mainMenu)
 end
 
 function love.update(dt)
@@ -68,6 +90,10 @@ function love.keypressed(key)
 
 	if key == 'k' then
 		log:write('k')
+	end
+
+	if key == 'l' then
+		log:toggledraw()
 	end
 end
 
