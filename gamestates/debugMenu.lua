@@ -1,13 +1,17 @@
-local debugMenu = require 'menu'
+local menu = require 'menu'
+local debugMenu = menu()
 
-function debugMenu:init()
-
-  self._items = {
+debugMenu:setItems(
+  {
     { 'Test', function() print('jeb is cool') end },
-    { 'Show Me God', showMeGod },
+    { 'Show Me God', showMeGod }
   }
+)
 
-  self._keys['escape'] = function() gamestate.switch(gamestates.mainMenu) end
-end
+debugMenu:setKeys(
+  'escape', 
+  function() gamestate.switch(gamestates.mainMenu) end
+)
+
 
 return debugMenu

@@ -10,20 +10,27 @@ fonts.log = love.graphics.setNewFont('fonts/AndromedaTV.TTF', 24)
 
 --[[ game states ]]
 gamestates = {}
-gamestates.mainMenu = require 'gamestates.mainMenu'
-gamestates.debugMenu = require 'gamestates.debugMenu'
+gamestates.mainMenu = require 'gamestates.mainMenu' -- displayed at startup
+print(gamestates.mainMenu)
+gamestates.debugMenu = require 'gamestates.debugMenu' -- displayed from main menu
+print(gamestates.debugMenu)
 
 
---[[ Game Objects ]]
+
+--[[ Global Game Objects ]]
 inspect = require 'inspect'
-local nvn = require 'nvn'
-local baton = require 'baton.baton'
 player = require 'player'
 gamestate = require 'gamestate'
+nvn = require 'nvn'
+baton = require 'baton.baton'
 --local batontest = require 'baton.test'
 
 
---[[ objects that have callbacks ]]
+--[[ 
+	These objects have callbacks. We need to provide a mechanism
+	to execute their callbacks every tick. Is this where editing
+	Love's callbacks can be helpful?	
+--]]
 local objects = {
 	nvn,
 	player,
@@ -59,8 +66,10 @@ local input = baton.new {
 
 --[[ Love Callbacks ]]
 function love.load()
-  -- set baton instance within batontest
-	if (batontest ~= nil) then batontest:setbaton(input) end
+	if (batontest ~= nil) then 
+		-- set baton instance within batontest
+		batontest:setbaton(input) 
+	end
 
 	log:setfont(fonts.log)
 	log:write('ok ok ok ')
