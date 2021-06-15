@@ -1,3 +1,4 @@
+local inspect = require 'inspect'
 local classic = require 'classic'
 local menu = classic:extend()
 
@@ -26,9 +27,22 @@ function menu:new()
   -- options 
   self._lineSpacing = love.graphics.getFont().getHeight(love.graphics.getFont())
   self._centered = false -- if true, center menu on screen, ignore _x and _y values
+
+  -- gamestate
+  self._previous = nil
+  self._drawPrevious = true
+end
+
+-- gamestate callbacks
+function menu:enter(previous)
+  self._previous = previous
 end
 
 function menu:draw()
+  if (self._previous ~= nil and self._drawPrevious) then
+    -- self._previous:draw()
+  end
+
   local x, y = self._x, self._y
   for key, value in pairs(self._items) do
     if (key == self._selectedItem) then
@@ -98,8 +112,9 @@ function menu:setItems(items)
   self._items = items
 end
 
-function menu:addItem(item)
-  table.append(self._items, item)
+function menu:addItem(text, action)
+  print(inspect(self._item))
+  table.insert(self._items, { text, action })
 end
 
 function menu:setKeys(keys)
@@ -111,7 +126,7 @@ function menu:setKey(key, value)
 end
 
 function menu:addKey(key, value)
-  table.append(self._keys, { key, value })
+  table.insert(self._keys, { key, value })
 end
 
 function menu:setFont(font)

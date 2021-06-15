@@ -29,6 +29,7 @@ function log:draw()
     love.graphics.setColor(self._color)
   end
 
+  -- text will draw from bottom to top
   local y = (#self._messages * 15) + self._y
   for key, value in pairs(self._messages) do
     if (self._font == nil) then

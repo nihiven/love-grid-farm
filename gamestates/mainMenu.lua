@@ -5,9 +5,14 @@ mainMenu:setFont(fonts.menu)
 
 mainMenu:setItems(
   {
-    { 'New Game', function() print('jeb is cool') end },
+    { 'New Game', function() gamestate.switch(gamestates.game) end },
     { 'Debug Menu', function() gamestate.switch(gamestates.debugMenu) end }
   }
+)
+
+mainMenu:setKeys(
+  escape=function() love.event.quit() end,
+  backspace=print('eat shit')
 )
 
 return mainMenu

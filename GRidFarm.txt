@@ -3,3 +3,8 @@ you move around on the grid
 plow, sow, water, harvest
 buy seeds
 harvest = seed + crops
+
+sun rise?
+blocking crops with shade?
+
+look at juicing; easing, tweening, squeezing, stretching: http://www.youtube.com/watch?v=Fy0aCDmgnxg

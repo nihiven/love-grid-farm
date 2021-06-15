@@ -11,10 +11,8 @@ fonts.log = love.graphics.setNewFont('fonts/AndromedaTV.TTF', 24)
 --[[ game states ]]
 gamestates = {}
 gamestates.mainMenu = require 'gamestates.mainMenu' -- displayed at startup
-print(gamestates.mainMenu)
 gamestates.debugMenu = require 'gamestates.debugMenu' -- displayed from main menu
-print(gamestates.debugMenu)
-
+gamestates.game = require 'gamestates.game' -- let's play
 
 
 --[[ Global Game Objects ]]
@@ -66,33 +64,22 @@ local input = baton.new {
 
 --[[ Love Callbacks ]]
 function love.load()
-	if (batontest ~= nil) then 
-		-- set baton instance within batontest
-		batontest:setbaton(input) 
-	end
-
 	log:setfont(fonts.log)
-	log:write('ok ok ok ')
-	log:write('alright, alright, alright. ooooohhhh')
+	log:write('alright, alright, alright')
 
 	gamestate.registerEvents()
   gamestate.switch(gamestates.mainMenu)
 end
 
 function love.update(dt)
-	if (batontest ~= nil) then batontest:update(dt) end
+	input:update(dt)
 end
 
 function love.draw()
-	if (batontest ~= nil) then batontest:draw() end
 	log:draw()
 end
 
 function love.keypressed(key)
-	if key == 'escape' then
-		love.event.quit()
-	end
-
 	if key == 'enter' then
 		print('try it out')
 	end
