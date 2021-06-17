@@ -20,9 +20,10 @@ function menu:new()
     { 'Item 1', function() log:write('Default Item One') end },
     { 'Item 2', function() log:write('Default Item Two') end }
   }
-  self._keys = {
-    escape = function() log:write('pressed escape') end
-  }
+
+  -- modifiable key bindings
+  self._keys = {  }
+  
 
   -- options 
   self._lineSpacing = love.graphics.getFont().getHeight(love.graphics.getFont())
@@ -33,7 +34,7 @@ function menu:new()
   self._drawPrevious = true
 end
 
--- gamestate callbacks
+---- CALLBACKS ----
 function menu:enter(previous)
   self._previous = previous
 end
@@ -61,12 +62,8 @@ function menu:draw()
   end
 end
 
-
 function menu:keypressed(key, code)
-  if (self._keys[key] ~= nil) then
-    self._keys[key]()
-  end
-
+  -- there are a number of fixed key bindings
   if (key == 'return') then
     self:selectItem(self._selectedItem)
   end
@@ -78,6 +75,30 @@ function menu:keypressed(key, code)
   if (key == 'down') then
     self:move(1)
   end
+
+  if (key == 'escape') then
+    self:gotoPrevious()
+  end
+
+  if (key == 'k') then
+    print(inspect(self._keys))
+  end
+
+  -- this is run down here so you can't override the functional menu keys
+  if (self._keys[key]) then
+    self._keys[key]()
+    return
+  end
+end
+
+
+---- USAGE ----
+function menu:move(direction)
+  local slot = self._selectedItem + direction
+
+  if (slot < 1) then slot = #self._items end
+  if (slot > #self._items) then slot = 1 end
+  self._selectedItem = slot
 end
 
 function menu:selectItem(item)
@@ -88,17 +109,17 @@ function menu:selectItem(item)
   else
     action()
   end
-
 end
 
-function menu:move(direction)
-  local slot = self._selectedItem + direction
-
-  if (slot < 1) then slot = #self._items end
-  if (slot > #self._items) then slot = 1 end
-  self._selectedItem = slot
+function menu:gotoPrevious()
+  if (self._previous) then
+    print(inspect(self._previous))
+    gamestate.switch(self._previous)
+  end
 end
 
+
+---- SETTINGS ----
 function menu:setCoords(x, y)
   self._x = x
   self._y = y
@@ -108,6 +129,13 @@ function menu:setLineSpacing(height)
   self._lineSpacing = height
 end
 
+function menu:setFont(font)
+  self._font = font
+  self._lineSpacing = font.getHeight(self._font)
+end
+
+
+---- ITEMS ----
 function menu:setItems(items)
   self._items = items
 end
@@ -117,6 +145,8 @@ function menu:addItem(text, action)
   table.insert(self._items, { text, action })
 end
 
+
+---- KEYS ----
 function menu:setKeys(keys)
   self._keys = keys
 end
@@ -125,13 +155,9 @@ function menu:setKey(key, value)
   self._keys[key] = value
 end
 
-function menu:addKey(key, value)
-  table.insert(self._keys, { key, value })
+function menu:addKeys(keys)
+  table.insert(self._keys, keys)
 end
 
-function menu:setFont(font)
-  self._font = font
-  self._lineSpacing = font.getHeight(self._font)
-end
 
 return menu

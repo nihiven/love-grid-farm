@@ -51,6 +51,17 @@ function game:drawGrid(refreshCanvas)
   love.graphics.setBlendMode("alpha") -- return to default blend mode
 end
 
+
+
+---- LOVE CALLBACKS ----
+function game:mousemoved(x, y, dx, dy, istouch)
+  print(x, y, dx, dy, istouch)
+end
+
+function game:mousepressed(x, y, button, istouch, presses)
+  print(x, y, button, istouch, presses)
+end
+
 function game:keypressed(key)
   if (key == 'backspace') then
     if (self._previous == nil) then
@@ -65,16 +76,20 @@ function game:keypressed(key)
   end
 end
 
-function game:init()
-  print('init game')
-  game:drawGrid{refreshCanvas=true} -- force canvas refresh
-end
 
 function game:draw()
   self:drawGrid()
 end
 
--- gamestate callbacks
+
+---- GAMESTATE CALLBACKS ----
+ -- init is called only once when the gamestate is first loaded
+function game:init()
+  print('init game')
+  game:drawGrid{refreshCanvas=true} -- force canvas refresh
+end
+
+-- enter is called every time the gamestate is loaded
 function game:enter(previous)
   self._previous = previous
 end
