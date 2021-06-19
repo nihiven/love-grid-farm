@@ -14,6 +14,12 @@ local game = {
 }
 
 -- NEXT: what grid is the mouse in?
+function game:drawStats()
+  local stats = love.graphics.getStats()
+  local str = string.format("Estimated amount of texture memory used: %.2f MB", stats.texturememory / 1024 / 1024)
+  love.graphics.print(str, 10, 300)
+end
+
 
 -- Draw the grid to a canvas, then reuse the canvas instead of redrawing the grid.
 function game:drawGrid(refreshCanvas)
@@ -79,6 +85,7 @@ end
 
 function game:draw()
   self:drawGrid()
+  self:drawStats()
 end
 
 

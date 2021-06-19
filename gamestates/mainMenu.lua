@@ -14,7 +14,7 @@ mainMenu:setItems(
 )
 
 -- menu key presses
-mainMenu:addKeys(
+mainMenu:setKeys(
   {
     escape = function() love.event.quit() end,
     f = function() log:write('f you too!') end

@@ -63,6 +63,12 @@ function menu:draw()
 end
 
 function menu:keypressed(key, code)
+  -- you can't override the functional menu keys, but you can dual bind
+  if (self._keys[key]) then
+    self._keys[key]()
+    return
+  end 
+  
   -- there are a number of fixed key bindings
   if (key == 'return') then
     self:selectItem(self._selectedItem)
@@ -84,11 +90,7 @@ function menu:keypressed(key, code)
     print(inspect(self._keys))
   end
 
-  -- this is run down here so you can't override the functional menu keys
-  if (self._keys[key]) then
-    self._keys[key]()
-    return
-  end
+
 end
 
 
