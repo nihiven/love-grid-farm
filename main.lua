@@ -6,6 +6,7 @@ log = require 'log'
 fonts = {}
 fonts.menu = love.graphics.setNewFont('fonts/AndromedaTV.TTF', 24)
 fonts.log = love.graphics.setNewFont('fonts/AndromedaTV.TTF', 24)
+fonts.debug = love.graphics.setNewFont('fonts/Inlanders.otf', 36)
 
 
 --[[ game states ]]

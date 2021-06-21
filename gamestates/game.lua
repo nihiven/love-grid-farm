@@ -6,27 +6,61 @@ local game = {
   _plotColor = {0, 1, 1},
   _x = 10,
   _y = 10,
+
   -- canvas related
   _canvas = nil,
   _canvasColor = {0,0,0},
-  -- gamestate relate
-  _previous = nil
+
+  -- gamestate related
+  _previous = nil,
+
+  -- mouse related
+  _mouseX = nil,
+  _mouseY = nil,
+  _mouseXD = nil,
+  _mouseYD = nil,
+  _istouch = nil,
+
+  -- debug settings
+  _debugFont = fonts.debug,
+  _graphicsStats = nil,
+  _drawStats = true,
 }
 
 -- NEXT: what grid is the mouse in?
-function game:setMouse()
+
+
+
+--- GAME FUNCTIONS ----
+function _log(message)
+  -- check for the log object, print otherwise
+  if (log) then
+    log:write(message)
+  else
+    print(message)
+  end
 end
 
 function game:drawStats()
-  local stats = love.graphics.getStats()
-  local str = string.format("Estimated amount of texture memory used: %.2f MB", stats.texturememory / 1024 / 1024)
-  love.graphics.print(str, 10, 300)
+  if (self._drawStats and self._graphicsStats ~= nil) then
+    local statsString = string.format(
+      "Draw Calls: %.0f\nTexture Memory: %.2f MB", 
+      self._graphicsStats.drawcalls,
+      self._graphicsStats.texturememory / 1024 / 1024
+    )
+
+    love.graphics.print(statsString, self._deubgFont, 100, 400)
+  end
+end
+
+function game:processInput()
+
 end
 
 -- Draw the grid to a canvas, then reuse the canvas instead of redrawing the grid.
 function game:drawGrid(refreshCanvas)
   if (self._canvas == nil or refreshCanvas) then
-    print('refresh canvas')
+    print('refreshing canvas...')
 
     -- create canvas
     local width = self._plotWidth * self._plots
@@ -59,15 +93,28 @@ function game:drawGrid(refreshCanvas)
   love.graphics.setBlendMode("alpha") -- return to default blend mode
 end
 
+---- GAME FUNCTIONS ----
+function game:setMouse(x, y, dx, dy, istouch)
+  -- offset mouse coords to be relative to the grid location
+  self._mouseX = x - self._x
+  self._mouseY = y - self._y
 
+  -- just copy over
+  self._mouseXD = dx
+  self._mouseYD = dy
+  self._istouch = istouch
+end
 
 ---- LOVE CALLBACKS ----
+function game:update(dt)
+end
+
 function game:mousemoved(x, y, dx, dy, istouch)
-  _log(x, y, dx, dy, istouch)
+  self:setMouse(x, y, dx, dy, istouch)
 end
 
 function game:mousepressed(x, y, button, istouch, presses)
-  _log(x, y, button, istouch, presses)
+  print(x, y, button, istouch, presses)
 end
 
 function game:keypressed(key)
@@ -82,12 +129,19 @@ function game:keypressed(key)
   if (key == 'escape') then
     gamestate.push(self._previous)
   end
+
+  if (key == 's') then
+    print(inspect(self._graphicsStats))
+  end
 end
 
 
 function game:draw()
   self:drawGrid()
   self:drawStats()
+
+  -- update graphics stats at end of draw per love2d wiki
+  self._graphicsStats = love.graphics.getStats()
 end
 
 
