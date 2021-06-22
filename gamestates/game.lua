@@ -1,37 +1,47 @@
 local game = {
-  -- farms are ALWAYS square
-  _plots = 10, -- so this is 5^2
-  _plotWidth = 50,
-  _plotHeight = 50,
-  _plotColor = {0, 1, 1},
-  _x = 10,
-  _y = 10,
-
-  -- canvas related
-  _canvas = nil,
-  _canvasColor = {0,0,0},
-
   -- gamestate related
   _previous = nil,
 
+  -- farming related
+  _plot = {
+    -- farms are ALWAYS square
+    count = 10, -- so this is 5^2
+    width = 50,
+    height = 50,
+    color = {0, 1, 1},
+    x = 10,
+    y = 10
+  },
+
+  -- canvas related
+  _canvas = {
+    data = nil,
+    color = {0,0,0}
+  },
+
   -- mouse related
-  _mouseX = nil,
-  _mouseY = nil,
-  _mouseXD = nil,
-  _mouseYD = nil,
-  _istouch = nil,
+  _mouse = {
+    x = nil,
+    y = nil,
+    dx = nil,
+    dy = nil,
+    isTouch = nil
+  },
 
   -- debug settings
-  _debugFont = fonts.debug,
-  _graphicsStats = nil,
-  _drawStats = true,
+  _debug = {
+    font = fonts.debug,
+    stats = nil,
+    draw = true,
+    padx = 10,
+    pady = 25
+  }
 }
 
 -- NEXT: what grid is the mouse in?
 
 
-
---- GAME FUNCTIONS ----
+--- HELPER FUNCTIONS ----
 function _log(message)
   -- check for the log object, print otherwise
   if (log) then
@@ -42,44 +52,47 @@ function _log(message)
 end
 
 function game:drawStats()
-  if (self._drawStats and self._graphicsStats ~= nil) then
-    local statsString = string.format(
-      "Draw Calls: %.0f\nTexture Memory: %.2f MB", 
-      self._graphicsStats.drawcalls,
-      self._graphicsStats.texturememory / 1024 / 1024
-    )
+  -- stats are updated at the end of game:draw()
+  local wwidth, wheight = love.graphics.getWidth(), love.graphics.getHeight()
 
-    love.graphics.print(statsString, self._deubgFont, 100, 400)
+  if (self._debug.draw and self._debug.stats ~= nil) then
+    local str = string.format(
+      "Draw Calls: %f\nTexture Memory: %.2f MB",
+      self._debug.stats.drawcalls,
+      self._debug.stats.texturememory / 1024 / 1024
+    )
+    local sheight = self._debug.font:getHeight(str)
+    
+    love.graphics.print(str, self._debug.padx, wheight - sheight - self._debug.pady)
   end
 end
 
-function game:processInput()
 
-end
+---- GAME FUNCTIONS ----
 
 -- Draw the grid to a canvas, then reuse the canvas instead of redrawing the grid.
-function game:drawGrid(refreshCanvas)
-  if (self._canvas == nil or refreshCanvas) then
+function game:drawPlots(refreshCanvas)
+  if (self._canvas.data == nil or refreshCanvas) then
     print('refreshing canvas...')
 
     -- create canvas
-    local width = self._plotWidth * self._plots
-    local height = self._plotHeight * self._plots
-    self._canvas = love.graphics.newCanvas(width, height)
+    local width = self._plot.width * self._plot.count
+    local height = self._plot.height * self._plot.count
+    self._canvas.data = love.graphics.newCanvas(width, height)
 
     -- setup canvas
-    love.graphics.setCanvas(self._canvas)
-    love.graphics.setColor(self._plotColor)
-    love.graphics.clear(self._canvasColor)
+    love.graphics.setCanvas(self._canvas.data)
+    love.graphics.setColor(self._plot.color)
+    love.graphics.clear(self._canvas.color)
 
     -- draw grid
-    for row=0,self._plots-1,1 do
+    for row=0,self._plot.count-1,1 do
       -- loop for columns
-      for col=0,self._plots-1,1 do
-        local x = (col * self._plotWidth)
-        local y = (row * self._plotHeight)
+      for col=0,self._plot.count-1,1 do
+        local x = (col * self._plot.width)
+        local y = (row * self._plot.height)
         
-        love.graphics.rectangle('line', x, y, self._plotWidth, self._plotHeight)
+        love.graphics.rectangle('line', x, y, self._plot.width, self._plot.height)
       end
     end
 
@@ -89,11 +102,10 @@ function game:drawGrid(refreshCanvas)
 
   love.graphics.setColor(1, 1, 1, 1) -- must reset colors per docs
   love.graphics.setBlendMode('alpha', 'premultiplied') -- use premult mode due to precalc alpha values
-  love.graphics.draw(self._canvas, self._x, self._y)
+  love.graphics.draw(self._canvas.data, self._plot.x, self._plot.y)
   love.graphics.setBlendMode("alpha") -- return to default blend mode
 end
 
----- GAME FUNCTIONS ----
 function game:setMouse(x, y, dx, dy, istouch)
   -- offset mouse coords to be relative to the grid location
   self._mouseX = x - self._x
@@ -104,6 +116,7 @@ function game:setMouse(x, y, dx, dy, istouch)
   self._mouseYD = dy
   self._istouch = istouch
 end
+
 
 ---- LOVE CALLBACKS ----
 function game:update(dt)
@@ -135,13 +148,12 @@ function game:keypressed(key)
   end
 end
 
-
 function game:draw()
-  self:drawGrid()
+  self:drawPlots()
   self:drawStats()
 
-  -- update graphics stats at end of draw per love2d wiki
-  self._graphicsStats = love.graphics.getStats()
+  -- should be last
+  self._debug.stats = love.graphics.getStats()
 end
 
 
@@ -149,7 +161,7 @@ end
  -- init is called only once when the gamestate is first loaded
 function game:init()
   print('init game')
-  game:drawGrid{refreshCanvas=true} -- force canvas refresh
+  game:drawPlots{refreshCanvas=true} -- force canvas refresh
 end
 
 -- enter is called every time the gamestate is loaded
