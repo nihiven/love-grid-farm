@@ -13,6 +13,13 @@ local game = {
     y = 10
   },
 
+  -- the active plot
+  _active = {
+    x = nil,
+    y = nil,
+    color = {1,0,1}
+  },
+
   -- canvas related
   _canvas = {
     data = nil,
@@ -21,11 +28,11 @@ local game = {
 
   -- mouse related
   _mouse = {
-    x = nil,
-    y = nil,
-    dx = nil,
-    dy = nil,
-    isTouch = nil
+    x = 0,
+    y = 0,
+    dx = 0,
+    dy = 0,
+    isTouch = false
   },
 
   -- debug settings
@@ -34,11 +41,14 @@ local game = {
     stats = nil,
     draw = true,
     padx = 10,
-    pady = 25
+    pady = 65
   }
 }
 
--- NEXT: what grid is the mouse in?
+-- NEXT: confine highlight to grid
+-- NEXT: click every time the active plot changes
+-- NEXT: arrows change active plot
+
 
 
 --- HELPER FUNCTIONS ----
@@ -57,12 +67,17 @@ function game:drawStats()
 
   if (self._debug.draw and self._debug.stats ~= nil) then
     local str = string.format(
-      "Draw Calls: %f\nTexture Memory: %.2f MB",
+      "Draw Calls: %i\nTexture Memory: %.2f MB\nMouse x:%i | y:%i\nPlot: %i,%i",
       self._debug.stats.drawcalls,
-      self._debug.stats.texturememory / 1024 / 1024
+      self._debug.stats.texturememory / 1024 / 1024,
+      self._mouse.x,
+      self._mouse.y,
+      self._active.x and self._active.x or -1,
+      self._active.y and self._active.y or -1
     )
     local sheight = self._debug.font:getHeight(str)
-    
+
+    love.graphics.setColor({0.7, 0.7, 0.7})
     love.graphics.print(str, self._debug.padx, wheight - sheight - self._debug.pady)
   end
 end
@@ -104,19 +119,34 @@ function game:drawPlots(refreshCanvas)
   love.graphics.setBlendMode('alpha', 'premultiplied') -- use premult mode due to precalc alpha values
   love.graphics.draw(self._canvas.data, self._plot.x, self._plot.y)
   love.graphics.setBlendMode("alpha") -- return to default blend mode
+
+  -- draw active plot
+  if (self._active.x) then
+    local ax = self._active.x * self._plot.width + self._plot.x
+    local ay = self._active.y * self._plot.height + self._plot.y
+    love.graphics.setColor(self._active.color)
+    love.graphics.rectangle('line', ax, ay, self._plot.width, self._plot.height)
+  end
 end
 
 function game:setMouse(x, y, dx, dy, istouch)
   -- offset mouse coords to be relative to the grid location
-  self._mouseX = x - self._x
-  self._mouseY = y - self._y
+  self._mouse.x = x - self._plot.x
+  self._mouse.y = y - self._plot.y
 
   -- just copy over
-  self._mouseXD = dx
-  self._mouseYD = dy
-  self._istouch = istouch
+  self._mouse.dx = dx
+  self._mouse.dy = dy
+  self._mouse.istouch = istouch
+
+  self._active.x, self._active.y = self:getPlot(self._mouse.x, self._mouse.y)
+
+  -- 
 end
 
+function game:getPlot(x, y)
+  return math.floor(x / self._plot.width), math.floor(y / self._plot.height)
+end
 
 ---- LOVE CALLBACKS ----
 function game:update(dt)
@@ -131,21 +161,20 @@ function game:mousepressed(x, y, button, istouch, presses)
 end
 
 function game:keypressed(key)
-  if (key == 'backspace') then
-    if (self._previous == nil) then
-      log:write('no previous state to switch to')
-    else
-      gamestate.switch(self._previous)
-    end
+  -- experimental key map
+  local keys = {
+    s = function() print(inspect(self._graphicsStats)) end,
+    u = function() prinspect(self._active) end,
+    x = function() print('jeb hit x') end,
+
+    -- REVIEW: menus need some work
+    escape = function() gamestate.push(self._previous) end
+  }
+
+  if (keys[key]) then
+    keys[key]()
   end
 
-  if (key == 'escape') then
-    gamestate.push(self._previous)
-  end
-
-  if (key == 's') then
-    print(inspect(self._graphicsStats))
-  end
 end
 
 function game:draw()
