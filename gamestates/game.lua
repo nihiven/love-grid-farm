@@ -8,9 +8,22 @@ local game = {
     count = 10, -- so this is 5^2
     width = 50,
     height = 50,
-    color = {0, 1, 1},
+    color = {
+      default = {126, 148, 16},
+      planted = {38, 148, 16},
+      watered = {255, 167, 5},
+      plowed = {204, 140, 22},
+      seed = {52, 16, 59},
+      fertilized = {25, 213, 227},
+    },
     x = 10,
     y = 10
+  },
+
+  -- plot data
+  _plots = {
+    -- plot state goes in here
+    -- set by buildPlots()
   },
 
   -- the active plot
@@ -37,8 +50,8 @@ local game = {
 
   -- debug settings
   _debug = {
+    color = {54, 21, 102},
     font = fonts.debug,
-    stats = nil,
     draw = true,
     padx = 10,
     pady = 65
@@ -48,7 +61,7 @@ local game = {
 -- NEXT: confine highlight to grid
 -- NEXT: click every time the active plot changes
 -- NEXT: arrows change active plot
-
+--local mouse = love.graphics.newImage("images\\pointer.png") -- load in a custom mouse image
 
 
 --- HELPER FUNCTIONS ----
@@ -61,15 +74,15 @@ function _log(message)
   end
 end
 
-function game:drawStats()
+function game:drawStats(stats)
   -- stats are updated at the end of game:draw()
   local wwidth, wheight = love.graphics.getWidth(), love.graphics.getHeight()
 
-  if (self._debug.draw and self._debug.stats ~= nil) then
+  if (self._debug.draw and stats ~= nil) then
     local str = string.format(
       "Draw Calls: %i\nTexture Memory: %.2f MB\nMouse x:%i | y:%i\nPlot: %i,%i",
-      self._debug.stats.drawcalls,
-      self._debug.stats.texturememory / 1024 / 1024,
+      stats.drawcalls,
+      stats.texturememory / 1024 / 1024,
       self._mouse.x,
       self._mouse.y,
       self._active.x and self._active.x or -1,
@@ -77,13 +90,31 @@ function game:drawStats()
     )
     local sheight = self._debug.font:getHeight(str)
 
-    love.graphics.setColor({0.7, 0.7, 0.7})
+    love.graphics.setColor(self._debug.color)
     love.graphics.print(str, self._debug.padx, wheight - sheight - self._debug.pady)
   end
 end
 
 
 ---- GAME FUNCTIONS ----
+function game:buildPlots()
+  -- fill all plot data
+  for row=0,self._plot.count-1,1 do
+    self._plots[row] = {}
+    -- loop for columns
+    for col=0,self._plot.count-1,1 do
+      self._plots[row][col] = {
+        planted = false,
+        watered = false,
+        plowed = false,
+        seed = nil,
+        fertilizer = nil,
+        x = (col * self._plot.width),
+        y = (row * self._plot.height)
+      }
+    end
+  end
+end
 
 -- Draw the grid to a canvas, then reuse the canvas instead of redrawing the grid.
 function game:drawPlots(refreshCanvas)
@@ -97,7 +128,7 @@ function game:drawPlots(refreshCanvas)
 
     -- setup canvas
     love.graphics.setCanvas(self._canvas.data)
-    love.graphics.setColor(self._plot.color)
+    love.graphics.setColor(self._plot.color.default)
     love.graphics.clear(self._canvas.color)
 
     -- draw grid
@@ -150,6 +181,9 @@ end
 
 ---- LOVE CALLBACKS ----
 function game:update(dt)
+  -- set active plot using mouse position
+  
+
 end
 
 function game:mousemoved(x, y, dx, dy, istouch)
@@ -166,6 +200,7 @@ function game:keypressed(key)
     s = function() print(inspect(self._graphicsStats)) end,
     u = function() prinspect(self._active) end,
     x = function() print('jeb hit x') end,
+    p = function() prinspect(self._plots[self._active.x][self._active.y]) end,
 
     -- REVIEW: menus need some work
     escape = function() gamestate.push(self._previous) end
@@ -179,10 +214,10 @@ end
 
 function game:draw()
   self:drawPlots()
-  self:drawStats()
+  self:drawStats(love.graphics.getStats())
 
-  -- should be last
-  self._debug.stats = love.graphics.getStats()
+ -- local x, y = love.mouse.getPosition() -- get the position of the mouse
+ -- love.graphics.draw(mouse, x, y) -- draw the custom mouse image
 end
 
 
@@ -190,12 +225,21 @@ end
  -- init is called only once when the gamestate is first loaded
 function game:init()
   print('init game')
+  game:buildPlots()
   game:drawPlots{refreshCanvas=true} -- force canvas refresh
 end
 
 -- enter is called every time the gamestate is loaded
 function game:enter(previous)
   self._previous = previous
+end
+
+function game:captureMouse()
+    love.mouse.setVisible(false) -- make default mouse invisible
+end
+
+function game:releaseMouse()
+  love.mouse.setVisible(true)
 end
 
 return game
