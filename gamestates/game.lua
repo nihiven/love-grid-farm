@@ -1,3 +1,18 @@
+--- HELPER FUNCTIONS ----
+function _log(message)
+  -- check for the log object, print otherwise
+  if (log) then
+    log:write(message)
+  else
+    print(message)
+  end
+end
+
+function rgbtolove(r, g, b, a)
+  return {(r or 0)/255, (g or 0)/255, (b or 0)/255, (a or 1)}
+end
+
+
 local game = {
   -- gamestate related
   _previous = nil,
@@ -9,12 +24,12 @@ local game = {
     width = 50,
     height = 50,
     color = {
-      default = {126, 148, 16},
-      planted = {38, 148, 16},
-      watered = {255, 167, 5},
-      plowed = {204, 140, 22},
-      seed = {52, 16, 59},
-      fertilized = {25, 213, 227},
+      default = rgbtolove(100, 188, 216),
+      planted = rgbtolove(38, 148, 16),
+      watered = rgbtolove(255, 167, 5, 0.5),
+      plowed = rgbtolove(204, 140, 22),
+      seed = rgbtolove(52, 16, 59),
+      fertilized = rgbtolove(25, 213, 227),
     },
     x = 10,
     y = 10
@@ -36,7 +51,7 @@ local game = {
   -- canvas related
   _canvas = {
     data = nil,
-    color = {0,0,0}
+    color = rgbtolove(0,0,0)
   },
 
   -- mouse related
@@ -50,7 +65,7 @@ local game = {
 
   -- debug settings
   _debug = {
-    color = {54, 21, 102},
+    color = rgbtolove(154, 21, 102),
     font = fonts.debug,
     draw = true,
     padx = 10,
@@ -59,20 +74,11 @@ local game = {
 }
 
 -- NEXT: confine highlight to grid
--- NEXT: click every time the active plot changes
+-- NEXT: click sound every time the active plot changes
 -- NEXT: arrows change active plot
---local mouse = love.graphics.newImage("images\\pointer.png") -- load in a custom mouse image
+local mouse = love.graphics.newImage("pointer.png") -- load in a custom mouse image
 
 
---- HELPER FUNCTIONS ----
-function _log(message)
-  -- check for the log object, print otherwise
-  if (log) then
-    log:write(message)
-  else
-    print(message)
-  end
-end
 
 function game:drawStats(stats)
   -- stats are updated at the end of game:draw()
@@ -160,34 +166,29 @@ function game:drawPlots(refreshCanvas)
   end
 end
 
-function game:setMouse(x, y, dx, dy, istouch)
+function game:updateMouse(dt)
+  local x, y = love.mouse.getPosition() -- get the position of the mouse
+
   -- offset mouse coords to be relative to the grid location
   self._mouse.x = x - self._plot.x
   self._mouse.y = y - self._plot.y
 
-  -- just copy over
+  -- just copy
   self._mouse.dx = dx
   self._mouse.dy = dy
   self._mouse.istouch = istouch
 
   self._active.x, self._active.y = self:getPlot(self._mouse.x, self._mouse.y)
-
-  -- 
 end
 
 function game:getPlot(x, y)
   return math.floor(x / self._plot.width), math.floor(y / self._plot.height)
 end
 
+
 ---- LOVE CALLBACKS ----
 function game:update(dt)
-  -- set active plot using mouse position
-  
-
-end
-
-function game:mousemoved(x, y, dx, dy, istouch)
-  self:setMouse(x, y, dx, dy, istouch)
+  self:updateMouse(dt)
 end
 
 function game:mousepressed(x, y, button, istouch, presses)
@@ -216,8 +217,8 @@ function game:draw()
   self:drawPlots()
   self:drawStats(love.graphics.getStats())
 
- -- local x, y = love.mouse.getPosition() -- get the position of the mouse
- -- love.graphics.draw(mouse, x, y) -- draw the custom mouse image
+  local x, y = love.mouse.getPosition() -- get the position of the mouse
+  love.graphics.draw(mouse, x, y) -- draw the custom mouse image
 end
 
 
@@ -229,9 +230,15 @@ function game:init()
   game:drawPlots{refreshCanvas=true} -- force canvas refresh
 end
 
--- enter is called every time the gamestate is loaded
+-- enter is called every time the gamestate is switched to game
 function game:enter(previous)
   self._previous = previous
+ --s self.captureMouse()
+end
+
+-- leave is called every time the gamestate is switched away from game
+function game:leave(previous)
+  self.releaseMouse()
 end
 
 function game:captureMouse()

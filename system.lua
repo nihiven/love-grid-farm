@@ -4,8 +4,9 @@ function prinspect(...)
 	print(inspect(...))
 end
 
--- enums
-types = {
-	SYSTEM = 1,
-	GAME = 2	
-}
+--[[ loop through every object, calling the func parameter ]] 
+local function callfuncontable(objects, func, ...)
+	for key, value in pairs(objects) do
+		value[func](...)
+	end
+end
