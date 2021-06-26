@@ -32,7 +32,12 @@ local game = {
       fertilized = rgbtolove(25, 213, 227),
     },
     x = 10,
-    y = 10
+    y = 10,
+    sounds = {
+      grid = {
+        change = love.audio.newSource("sounds/gridClick.ogg", "static")
+      }
+    }
   },
 
   -- plot data
@@ -73,10 +78,9 @@ local game = {
   }
 }
 
--- NOW: confine highlight to grid
--- NEXT: click sound every time the active plot changes
 -- NEXT: arrows change active plot
-local cursor = love.mouse.newCursor(love.image.newImageData("pointer.png"), 1, 2)
+-- JUICE: shake the grid when plot changes
+local cursor = love.mouse.newCursor(love.image.newImageData("pointer.png"), 0, 0)
 
 function game:drawStats(stats)
   -- stats are updated at the end of game:draw()
@@ -110,6 +114,7 @@ function game:buildPlots()
     -- loop for columns
     for col=0,self._plot.count-1,1 do
       self._plots[row][col] = {
+        selected = false,
         planted = false,
         watered = false,
         plowed = false,
@@ -125,7 +130,9 @@ end
 -- Draw the grid to a canvas, then reuse the canvas instead of redrawing the grid.
 function game:drawPlots(refreshCanvas)
   if (self._canvas.data == nil or refreshCanvas) then
-    print('refreshing canvas...')
+    -- there isn't a canvas OR we're forcing a refresh
+    prinspect(refreshCanvas)
+    print(refreshCanvas and 'refreshing grid canvas...' or 'creating grid canvas...')
 
     -- create canvas
     local width = self._plot.width * self._plot.count
@@ -152,15 +159,19 @@ function game:drawPlots(refreshCanvas)
     love.graphics.setCanvas()
   end
 
+  -- draw the saved canvas
   love.graphics.setColor(1, 1, 1, 1) -- must reset colors per docs
-  love.graphics.setBlendMode('alpha', 'premultiplied') -- use premult mode due to precalc alpha values
+  love.graphics.setBlendMode('alpha', 'premultiplied') -- use premult mode due to precalced alpha values
   love.graphics.draw(self._canvas.data, self._plot.x, self._plot.y)
   love.graphics.setBlendMode("alpha") -- return to default blend mode
 
   -- draw active plot
   if (self._active.x) then
+    -- calculate grid origin coords
     local ax = self._active.x * self._plot.width + self._plot.x
     local ay = self._active.y * self._plot.height + self._plot.y
+
+    -- change color and draw the highlight
     love.graphics.setColor(self._active.color)
     love.graphics.rectangle('line', ax, ay, self._plot.width, self._plot.height)
   end
@@ -176,9 +187,43 @@ function game:updateMouse()
   -- grid relative
   self._mouse.rx = x - self._plot.x
   self._mouse.ry = y - self._plot.y
+end
+
+-- returns bool - did plot change
+function game:updateActivePlot()
+  -- store old values
+  local ox, oy = self._active.x, self._active.y 
 
   -- check to see if the active plot is within bounds
-  self._active.x, self._active.y = self:getPlot(self._mouse.rx, self._mouse.ry)
+  local nx, ny = self:getPlot(self._mouse.rx, self._mouse.ry)
+
+  -- confine the active plot to the grid on the x axis
+  if (nx >= 0 and nx < self._plot.count) then
+    self._active.x = nx
+    plotChanged = true
+  end
+
+  -- confine the active plot to the grid on the y axis
+  if (ny >= 0 and ny < self._plot.count) then
+    self._active.y = ny
+    plotChanged = true
+  end
+
+  -- check to see if the old plot values are different than the new ones
+  if (self._active.x == ox and self._active.y == oy) then
+    -- plots weren't updated
+    return false
+  end
+
+  -- update plot selected properties 
+  if (ox ~= nil and oy ~= nil) then
+    self._plots[ox][oy].selected = false
+  end
+
+  self._plots[self._active.x][self._active.y].selected = true
+
+  -- plots were updated
+  return true
 end
 
 function game:getPlot(x, y)
@@ -189,6 +234,11 @@ end
 ---- LOVE CALLBACKS ----
 function game:update(dt)
   self:updateMouse()
+
+  -- returns true if the active plot changed
+  if (self:updateActivePlot() == true) then
+    love.audio.play(self._plot.sounds.grid.change)
+  end
 end
 
 function game:mousepressed(x, y, button, istouch, presses)
@@ -207,6 +257,7 @@ function game:keypressed(key)
     escape = function() gamestate.push(self._previous) end
   }
 
+  -- if the given key is mapped, call it as a function
   if (keys[key]) then
     keys[key]()
   end
@@ -216,8 +267,6 @@ end
 function game:draw()
   self:drawPlots()
   self:drawStats(love.graphics.getStats())
-
-  local x, y = love.mouse.getPosition() -- get the position of the mouse
 end
 
 
@@ -226,7 +275,7 @@ end
 function game:init()
   print('init game')
   game:buildPlots()
-  game:drawPlots{refreshCanvas=true} -- force canvas refresh
+  game:drawPlots()
 end
 
 -- enter is called every time the gamestate is switched to game

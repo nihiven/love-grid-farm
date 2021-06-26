@@ -12,6 +12,5 @@ function love.conf(t)
   t.window.vsync = 1                  -- Vertical sync mode (number)
   t.window.msaa = 0                   -- The number of samples to use with multi-sampled antialiasing (number)
 
-	t.modules.physics = false
-	t.modules.sound = false
+  -- TODO: turn off modules we don't need once we're done with code!
 end
