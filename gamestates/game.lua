@@ -73,12 +73,10 @@ local game = {
   }
 }
 
--- NEXT: confine highlight to grid
+-- NOW: confine highlight to grid
 -- NEXT: click sound every time the active plot changes
 -- NEXT: arrows change active plot
-local mouse = love.graphics.newImage("pointer.png") -- load in a custom mouse image
-
-
+local cursor = love.mouse.newCursor(love.image.newImageData("pointer.png"), 1, 2)
 
 function game:drawStats(stats)
   -- stats are updated at the end of game:draw()
@@ -86,11 +84,13 @@ function game:drawStats(stats)
 
   if (self._debug.draw and stats ~= nil) then
     local str = string.format(
-      "Draw Calls: %i\nTexture Memory: %.2f MB\nMouse x:%i | y:%i\nPlot: %i,%i",
+      "Draw Calls: %i\nTexture Memory: %.2f MB\nMouse [x:%i y:%i] [rx:%i ry:%i]\nPlot: %i,%i",
       stats.drawcalls,
       stats.texturememory / 1024 / 1024,
       self._mouse.x,
       self._mouse.y,
+      self._mouse.rx,
+      self._mouse.ry,
       self._active.x and self._active.x or -1,
       self._active.y and self._active.y or -1
     )
@@ -166,19 +166,19 @@ function game:drawPlots(refreshCanvas)
   end
 end
 
-function game:updateMouse(dt)
+function game:updateMouse()
   local x, y = love.mouse.getPosition() -- get the position of the mouse
+  
+  -- window relative
+  self._mouse.x = x
+  self._mouse.y = y
 
-  -- offset mouse coords to be relative to the grid location
-  self._mouse.x = x - self._plot.x
-  self._mouse.y = y - self._plot.y
+  -- grid relative
+  self._mouse.rx = x - self._plot.x
+  self._mouse.ry = y - self._plot.y
 
-  -- just copy
-  self._mouse.dx = dx
-  self._mouse.dy = dy
-  self._mouse.istouch = istouch
-
-  self._active.x, self._active.y = self:getPlot(self._mouse.x, self._mouse.y)
+  -- check to see if the active plot is within bounds
+  self._active.x, self._active.y = self:getPlot(self._mouse.rx, self._mouse.ry)
 end
 
 function game:getPlot(x, y)
@@ -188,7 +188,7 @@ end
 
 ---- LOVE CALLBACKS ----
 function game:update(dt)
-  self:updateMouse(dt)
+  self:updateMouse()
 end
 
 function game:mousepressed(x, y, button, istouch, presses)
@@ -218,7 +218,6 @@ function game:draw()
   self:drawStats(love.graphics.getStats())
 
   local x, y = love.mouse.getPosition() -- get the position of the mouse
-  love.graphics.draw(mouse, x, y) -- draw the custom mouse image
 end
 
 
@@ -233,7 +232,7 @@ end
 -- enter is called every time the gamestate is switched to game
 function game:enter(previous)
   self._previous = previous
- --s self.captureMouse()
+  self.captureMouse()
 end
 
 -- leave is called every time the gamestate is switched away from game
@@ -242,11 +241,14 @@ function game:leave(previous)
 end
 
 function game:captureMouse()
-    love.mouse.setVisible(false) -- make default mouse invisible
+  --love.mouse.setVisible(false) -- make default mouse invisible
+  love.mouse.setGrabbed(true)
+  love.mouse.setCursor(cursor)
 end
 
 function game:releaseMouse()
-  love.mouse.setVisible(true)
+  love.mouse.setGrabbed(false)
+  --love.mouse.setVisible(true)
 end
 
 return game
